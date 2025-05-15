@@ -1,3 +1,4 @@
+
 "use client";
 
 import { useState } from 'react';
@@ -40,9 +41,10 @@ export default function PredictionTab({ historicalData, dataLoading, drawName, a
     setPrediction(null);
 
     try {
-      // Format historical data as a string for the AI model
+      // Format historical data as a string for the AI model, most recent first
       const formattedHistoricalData = historicalData
-        .slice(0, 50) // Limit to most recent 50 results to avoid overly large input
+        .sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime()) // Ensure sorted by date desc
+        .slice(0, 75) // Limit to most recent 75 results to manage input size & relevance
         .map(d => {
           let entry = `Date: ${d.date}, Gagnants: ${d.gagnants.join(',')}`;
           if (d.machine && d.machine.length > 0) {
@@ -61,15 +63,16 @@ export default function PredictionTab({ historicalData, dataLoading, drawName, a
       setPrediction(result);
       toast({
         title: "Prédiction Générée",
-        description: `Nouvelle prédiction disponible pour ${drawName}.`,
+        description: `Nouvelle prédiction disponible pour ${drawName || apiDrawName}.`,
       });
     } catch (e: any) {
       console.error("Erreur lors de la génération de la prédiction:", e);
-      setError(e.message || "Une erreur est survenue lors de la génération de la prédiction.");
+      const errorMessage = e.message || "Une erreur est survenue lors de la génération de la prédiction.";
+      setError(errorMessage);
       toast({
         variant: "destructive",
         title: "Erreur de Prédiction",
-        description: e.message || "Impossible de générer la prédiction.",
+        description: errorMessage,
       });
     } finally {
       setLoading(false);
@@ -91,7 +94,7 @@ export default function PredictionTab({ historicalData, dataLoading, drawName, a
       <Card className="shadow-lg">
         <CardHeader>
           <CardTitle className="text-2xl">Prédictions Intelligentes {drawName ? ` - ${drawName}` : ''}</CardTitle>
-          <CardDescription>Générez des prédictions basées sur l'analyse IA des données historiques.</CardDescription>
+          <CardDescription>Générez des prédictions basées sur l'analyse IA des données historiques, en considérant la fréquence, les écarts et les tendances.</CardDescription>
         </CardHeader>
         <CardContent className="text-center">
           <Button onClick={handleGeneratePrediction} disabled={loading || historicalData.length === 0} size="lg" className="w-full sm:w-auto">
@@ -125,23 +128,40 @@ export default function PredictionTab({ historicalData, dataLoading, drawName, a
           </CardHeader>
           <CardContent className="space-y-6">
             <div>
-              <h3 className="text-xl font-semibold mb-3">Numéros Prédits:</h3>
-              <div className="flex flex-wrap gap-3 justify-center p-4 bg-primary/10 rounded-lg">
-                {prediction.predictions.map((num, index) => (
-                  <NumberBall key={`pred-${index}-${num}`} number={num} size="lg" />
-                ))}
+              <h3 className="text-xl font-semibold mb-3">Numéros Prédits et leur Chance Estimée:</h3>
+              <div className="flex flex-wrap gap-4 justify-center p-4 bg-primary/10 rounded-lg">
+                {prediction.predictedNumbers && prediction.predictedNumbers.length > 0 ? (
+                  prediction.predictedNumbers.map((item, index) => (
+                    <div key={`pred-${index}-${item.number}`} className="flex flex-col items-center p-2 space-y-1 min-w-[70px]">
+                      <NumberBall number={item.number} size="lg" />
+                      <span className="text-xs sm:text-sm text-center font-medium text-muted-foreground">{item.chance}</span>
+                    </div>
+                  ))
+                ) : (
+                  <p className="text-muted-foreground">L'IA n'a pas retourné de numéros prédits pour cette fois.</p>
+                )}
               </div>
             </div>
             <div className="pt-4 border-t">
               <h3 className="text-xl font-semibold mb-3">Analyse de l'IA:</h3>
               <p className="text-sm text-muted-foreground bg-secondary/50 p-4 rounded-md whitespace-pre-wrap leading-relaxed">
-                {prediction.analysis}
+                {prediction.analysis || "Aucune analyse détaillée n'a été fournie."}
               </p>
             </div>
              <CardDescription className="text-xs text-center pt-4">
-                Note: Les prédictions sont générées par une IA et sont basées sur des analyses statistiques. Elles ne garantissent pas les résultats futurs. Jouez de manière responsable.
+                Note: Les prédictions sont générées par une IA et sont basées sur des analyses statistiques des données fournies. Elles ne garantissent pas les résultats futurs. Jouez de manière responsable.
             </CardDescription>
           </CardContent>
+        </Card>
+      )}
+       {!prediction && !loading && !error && historicalData.length > 0 && (
+         <Card className="shadow-md text-center py-10">
+            <CardContent>
+                <Lightbulb className="mx-auto h-12 w-12 text-muted-foreground opacity-50" />
+                <p className="mt-4 text-lg text-muted-foreground">
+                    Cliquez sur "Générer une Prédiction" pour que l'IA analyse les données et propose des numéros.
+                </p>
+            </CardContent>
         </Card>
       )}
     </div>
