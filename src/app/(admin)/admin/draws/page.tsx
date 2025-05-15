@@ -56,7 +56,13 @@ export default function AdminDrawsPage() {
             setDraws(results);
         } catch (error) {
             console.error("Failed to fetch draws:", error);
-            toast({ title: "Erreur", description: "Impossible de charger les tirages.", variant: "destructive" });
+            let errorMessage = "Impossible de charger les tirages.";
+            if (error instanceof Error) {
+                errorMessage = error.message;
+            } else if (typeof error === 'string') {
+                errorMessage = error;
+            }
+            toast({ title: "Erreur", description: errorMessage, variant: "destructive" });
         } finally {
             setIsLoading(false);
         }
@@ -69,12 +75,11 @@ export default function AdminDrawsPage() {
     const handleInputChange = (e: ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
         const { name, value } = e.target;
         if (name === "gagnants" || name === "machine") {
-            // Ensure numbers are parsed correctly without arbitrary limits
             const numbers = value.split(',')
-                                 .map(n => n.trim()) // Trim whitespace first
-                                 .filter(nStr => nStr !== '') // Remove empty strings from trailing/double commas
-                                 .map(nStr => parseInt(nStr)) // Parse to number
-                                 .filter(n => !isNaN(n) && n >= 1 && n <= 90); // Validate
+                                 .map(n => n.trim()) 
+                                 .filter(nStr => nStr !== '') 
+                                 .map(nStr => parseInt(nStr)) 
+                                 .filter(n => !isNaN(n) && n >= 1 && n <= 90); 
             setCurrentDraw(prev => ({ ...prev, [name]: numbers }));
         } else {
             setCurrentDraw(prev => ({ ...prev, [name]: value }));
@@ -90,7 +95,7 @@ export default function AdminDrawsPage() {
             toast({ title: "Validation échouée", description: "Veuillez sélectionner un nom de tirage.", variant: "destructive" });
             return false;
         }
-        if (!data.date || !isValid(parseISO(data.date))) { // parseISO is better for YYYY-MM-DD
+        if (!data.date || !isValid(parseISO(data.date))) { 
              toast({ title: "Validation échouée", description: "Veuillez entrer une date valide (YYYY-MM-DD).", variant: "destructive" });
             return false;
         }
@@ -98,7 +103,6 @@ export default function AdminDrawsPage() {
             toast({ title: "Validation échouée", description: "Numéros gagnants invalides (doivent être entre 1-90 et non vides).", variant: "destructive" });
             return false;
         }
-        // Machine numbers are optional, but if present, they must be valid
         if (data.machine && data.machine.length > 0 && data.machine.some(n => n < 1 || n > 90)) {
             toast({ title: "Validation échouée", description: "Numéros machine invalides (doivent être entre 1-90).", variant: "destructive" });
             return false;
@@ -112,7 +116,6 @@ export default function AdminDrawsPage() {
         try {
             const dataToSave = {
                 ...currentDraw,
-                // Ensure machine is an empty array if no numbers were input, not undefined
                 machine: currentDraw.machine && currentDraw.machine.length > 0 ? currentDraw.machine : [],
             };
 
@@ -126,16 +129,22 @@ export default function AdminDrawsPage() {
             }
             setIsFormOpen(false);
             fetchDraws();
-        } catch (error: any) {
+        } catch (error) {
             console.error("Failed to save draw:", error);
-            toast({ title: "Erreur", description: error.message || "Impossible d'enregistrer le tirage.", variant: "destructive" });
+            let errorMessage = "Impossible d'enregistrer le tirage.";
+            if (error instanceof Error) {
+                errorMessage = error.message;
+            } else if (typeof error === 'string') {
+                errorMessage = error;
+            }
+            toast({ title: "Erreur", description: errorMessage, variant: "destructive" });
         }
     };
 
     const openEditForm = (draw: DrawResult) => {
         setCurrentDraw({
             ...draw,
-            date: draw.date ? format(parseISO(draw.date), 'yyyy-MM-dd') : '', // Ensure correct format for date input
+            date: draw.date ? format(parseISO(draw.date), 'yyyy-MM-dd') : '',
             gagnants: [...draw.gagnants], 
             machine: draw.machine ? [...draw.machine] : []
         });
@@ -151,7 +160,6 @@ export default function AdminDrawsPage() {
 
     const handleDelete = async (id?: number) => {
         if (id === undefined) return;
-        // Using window.confirm for simplicity, consider a custom dialog for better UX
         if (window.confirm("Êtes-vous sûr de vouloir supprimer ce tirage ?")) {
             try {
                 await deleteDrawResult(id);
@@ -159,7 +167,13 @@ export default function AdminDrawsPage() {
                 fetchDraws();
             } catch (error) {
                 console.error("Failed to delete draw:", error);
-                toast({ title: "Erreur", description: "Impossible de supprimer le tirage.", variant: "destructive" });
+                let errorMessage = "Impossible de supprimer le tirage.";
+                if (error instanceof Error) {
+                    errorMessage = error.message;
+                } else if (typeof error === 'string') {
+                    errorMessage = error;
+                }
+                toast({ title: "Erreur", description: errorMessage, variant: "destructive" });
             }
         }
     };
@@ -174,7 +188,13 @@ export default function AdminDrawsPage() {
             link.click();
             toast({ title: "Exportation Réussie", description: "Les données ont été téléchargées." });
         } catch (error) {
-            toast({ title: "Erreur d'Exportation", description: "Impossible d'exporter les données.", variant: "destructive" });
+            let errorMessage = "Impossible d'exporter les données.";
+            if (error instanceof Error) {
+                errorMessage = error.message;
+            } else if (typeof error === 'string') {
+                errorMessage = error;
+            }
+            toast({ title: "Erreur d'Exportation", description: errorMessage, variant: "destructive" });
         }
     };
 
@@ -193,30 +213,34 @@ export default function AdminDrawsPage() {
                      throw new Error("Le fichier JSON doit contenir un tableau de tirages.");
                 }
 
-                // Validate and transform imported data to DrawResult structure (without ID)
                 const validDrawResults: Omit<DrawResult, 'id'>[] = importedData.map((item: any, index: number) => {
                     if (!item.drawName || typeof item.drawName !== 'string' ||
                         !item.date || typeof item.date !== 'string' || !isValid(parseISO(item.date)) ||
                         !Array.isArray(item.gagnants) || item.gagnants.some((n: any) => typeof n !== 'number' || n < 1 || n > 90) || item.gagnants.length === 0) {
                         throw new Error(`Format de données invalide pour l'élément ${index + 1}. Vérifiez drawName, date, et gagnants.`);
                     }
-                    // Ensure machine is an array of numbers if present, otherwise empty array
                     const machine = (Array.isArray(item.machine) && item.machine.every((n: any) => typeof n === 'number' && n >= 1 && n <= 90)) 
                                     ? item.machine 
                                     : [];
                     return {
                         drawName: item.drawName,
-                        date: format(parseISO(item.date), 'yyyy-MM-dd'), // Standardize date format
+                        date: format(parseISO(item.date), 'yyyy-MM-dd'), 
                         gagnants: item.gagnants,
                         machine: machine,
                     };
                 });
                 
-                await bulkAddDrawResults(validDrawResults as DrawResult[]); // Cast as DrawResult for bulkAdd
+                await bulkAddDrawResults(validDrawResults as DrawResult[]);
                 toast({ title: "Importation Réussie", description: `${validDrawResults.length} tirages traités.` });
                 fetchDraws();
             } catch (error: any) {
-                toast({ title: "Erreur d'Importation", description: error.message || "Impossible d'importer le fichier.", variant: "destructive" });
+                let errorMessage = "Impossible d'importer le fichier.";
+                if (error instanceof Error) {
+                    errorMessage = error.message;
+                } else if (typeof error === 'string') {
+                    errorMessage = error;
+                }
+                toast({ title: "Erreur d'Importation", description: errorMessage, variant: "destructive" });
             } finally {
                 if (event.target) event.target.value = "";
             }
@@ -323,7 +347,7 @@ export default function AdminDrawsPage() {
                 <DialogContent 
                     key={isEditing && currentDraw.id !== undefined ? `draw-edit-${currentDraw.id}` : `draw-add-${Date.now()}`} 
                     className="sm:max-w-[525px]"
-                    onCloseAutoFocus={(e) => e.preventDefault()} // Prevents auto-focus on submit which can be jarring
+                    onCloseAutoFocus={(e) => e.preventDefault()} 
                 >
                     <DialogHeader>
                         <DialogTitle>{isEditing ? "Modifier le Tirage" : "Ajouter un Tirage"}</DialogTitle>
