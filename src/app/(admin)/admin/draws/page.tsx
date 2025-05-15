@@ -43,6 +43,8 @@ export default function AdminDrawsPage() {
     const [currentDraw, setCurrentDraw] = useState<FormData>(EMPTY_FORM_DATA);
     const [isEditing, setIsEditing] = useState(false);
     const { toast } = useToast();
+    const [dialogInstanceKey, setDialogInstanceKey] = useState<string>(`dialog-key-${Date.now()}`);
+
 
     const fetchDraws = useCallback(async () => {
         setIsLoading(true);
@@ -57,7 +59,7 @@ export default function AdminDrawsPage() {
         } catch (error) {
             console.error("Failed to fetch draws:", error);
             let errorMessage = "Impossible de charger les tirages.";
-            if (error instanceof Error) {
+            if (error instanceof Error && error.message) {
                 errorMessage = error.message;
             } else if (typeof error === 'string') {
                 errorMessage = error;
@@ -116,6 +118,7 @@ export default function AdminDrawsPage() {
         try {
             const dataToSave = {
                 ...currentDraw,
+                date: currentDraw.date ? format(parseISO(currentDraw.date), 'yyyy-MM-dd') : '', // Ensure date is correctly formatted
                 machine: currentDraw.machine && currentDraw.machine.length > 0 ? currentDraw.machine : [],
             };
 
@@ -132,7 +135,7 @@ export default function AdminDrawsPage() {
         } catch (error) {
             console.error("Failed to save draw:", error);
             let errorMessage = "Impossible d'enregistrer le tirage.";
-            if (error instanceof Error) {
+             if (error instanceof Error && error.message) {
                 errorMessage = error.message;
             } else if (typeof error === 'string') {
                 errorMessage = error;
@@ -148,12 +151,14 @@ export default function AdminDrawsPage() {
             gagnants: [...draw.gagnants], 
             machine: draw.machine ? [...draw.machine] : []
         });
+        setDialogInstanceKey(`edit-${draw.id}-${Date.now()}`);
         setIsEditing(true);
         setIsFormOpen(true);
     };
 
     const openAddForm = () => {
         setCurrentDraw(EMPTY_FORM_DATA);
+        setDialogInstanceKey(`add-${Date.now()}`);
         setIsEditing(false);
         setIsFormOpen(true);
     };
@@ -168,7 +173,7 @@ export default function AdminDrawsPage() {
             } catch (error) {
                 console.error("Failed to delete draw:", error);
                 let errorMessage = "Impossible de supprimer le tirage.";
-                if (error instanceof Error) {
+                if (error instanceof Error && error.message) {
                     errorMessage = error.message;
                 } else if (typeof error === 'string') {
                     errorMessage = error;
@@ -189,7 +194,7 @@ export default function AdminDrawsPage() {
             toast({ title: "Exportation Réussie", description: "Les données ont été téléchargées." });
         } catch (error) {
             let errorMessage = "Impossible d'exporter les données.";
-            if (error instanceof Error) {
+            if (error instanceof Error && error.message) {
                 errorMessage = error.message;
             } else if (typeof error === 'string') {
                 errorMessage = error;
@@ -224,18 +229,19 @@ export default function AdminDrawsPage() {
                                     : [];
                     return {
                         drawName: item.drawName,
+                        // Ensure date from JSON is also correctly formatted if it isn't already YYYY-MM-DD
                         date: format(parseISO(item.date), 'yyyy-MM-dd'), 
                         gagnants: item.gagnants,
                         machine: machine,
                     };
                 });
                 
-                await bulkAddDrawResults(validDrawResults as DrawResult[]);
+                await bulkAddDrawResults(validDrawResults as DrawResult[]); // bulkAddDrawResults is addDrawResults
                 toast({ title: "Importation Réussie", description: `${validDrawResults.length} tirages traités.` });
                 fetchDraws();
             } catch (error: any) {
                 let errorMessage = "Impossible d'importer le fichier.";
-                if (error instanceof Error) {
+                 if (error instanceof Error && error.message) {
                     errorMessage = error.message;
                 } else if (typeof error === 'string') {
                     errorMessage = error;
@@ -345,7 +351,7 @@ export default function AdminDrawsPage() {
 
             <Dialog open={isFormOpen} onOpenChange={setIsFormOpen}>
                 <DialogContent 
-                    key={isEditing && currentDraw.id !== undefined ? `draw-edit-${currentDraw.id}` : `draw-add-${Date.now()}`} 
+                    key={dialogInstanceKey}
                     className="sm:max-w-[525px]"
                     onCloseAutoFocus={(e) => e.preventDefault()} 
                 >
