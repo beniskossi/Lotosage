@@ -5,9 +5,30 @@ import type { DrawResult } from '@/lib/types';
 import { addDrawResults, getDrawResults, clearDrawData, getLatestDrawDate } from '@/lib/indexeddb';
 import { useToast } from '@/hooks/use-toast';
 import { getDrawCategoryBySlug, FlatDrawCategory } from '@/lib/config';
-import { format, subMonths, getYear, getMonth } from 'date-fns';
+import { format, subMonths, getYear, getMonth, Locale } from 'date-fns';
 
 const MONTHS_TO_FETCH_INITIALLY = 3; // Fetch last 3 months initially if DB is empty
+
+// Define a custom French locale for date-fns
+const frenchLocale: Partial<Locale> = {
+  localize: {
+    month: (n: number) =>
+      [
+        'janvier',
+        'février',
+        'mars',
+        'avril',
+        'mai',
+        'juin',
+        'juillet',
+        'août',
+        'septembre',
+        'octobre',
+        'novembre',
+        'décembre',
+      ][n],
+  },
+};
 
 export function useLotteryData(drawSlug: string | null) {
   const [data, setData] = useState<DrawResult[]>([]);
@@ -25,64 +46,72 @@ export function useLotteryData(drawSlug: string | null) {
     }
   }, [drawSlug]);
 
-  const fetchAndStoreResults = useCallback(async (apiDrawName: string, monthYear?: string) => {
-    setLoading(true);
-    setError(null);
-    try {
-      const queryParam = monthYear ? `?month=${monthYear}` : '';
-      const response = await fetch(`/api/results${queryParam}`);
-      if (!response.ok) {
-        const errorData = await response.json();
-        throw new Error(errorData.error || `Erreur ${response.status} lors de la récupération des données.`);
-      }
-      const fetchedData: DrawResult[] = await response.json();
-      
-      // Filter for the specific draw category based on apiDrawName
-      const relevantData = fetchedData.filter(d => d.drawName === apiDrawName);
-      
-      if (relevantData.length > 0) {
-        await addDrawResults(relevantData);
-      }
-      return relevantData;
-    } catch (e: any) {
-      console.error("Erreur lors du fetchAndStoreResults:", e);
-      setError(e.message || "Une erreur inconnue est survenue.");
-      toast({
-        variant: "destructive",
-        title: "Erreur de Récupération",
-        description: e.message || "Impossible de récupérer les derniers résultats.",
-      });
-      return [];
-    } finally {
-      setLoading(false);
-    }
-  }, [toast]);
-  
-  const loadInitialData = useCallback(async (category: FlatDrawCategory) => {
-    setLoading(true);
-    try {
-      let results = await getDrawResults(category.apiName);
-      if (results.length === 0) {
-        toast({ title: "Base de données locale vide", description: `Chargement initial des données pour ${category.name}...` });
-        // Fetch last few months if DB is empty for this category
-        const today = new Date();
-        for (let i = 0; i < MONTHS_TO_FETCH_INITIALLY; i++) {
-          const targetMonth = subMonths(today, i);
-          const monthYearStr = format(targetMonth, 'MMMM-yyyy', { locale: {localize:{month:n=>['janvier','février','mars','avril','mai','juin','juillet','août','septembre','octobre','novembre','décembre'][n-1]}} as any}).toLowerCase(); // e.g., mai-2024
-          const fetchedForMonth = await fetchAndStoreResults(category.apiName, monthYearStr);
-          // results = [...results, ...fetchedForMonth]; // Not strictly needed if getDrawResults is called again
+  const fetchAndStoreResults = useCallback(
+    async (apiDrawName: string, monthYear?: string) => {
+      setLoading(true);
+      setError(null);
+      try {
+        const queryParam = monthYear ? `?month=${monthYear}` : '';
+        const response = await fetch(`/api/results${queryParam}`);
+        if (!response.ok) {
+          const errorData = await response.json();
+          throw new Error(errorData.error || `Erreur ${response.status} lors de la récupération des données.`);
         }
-        results = await getDrawResults(category.apiName); // Re-fetch all from DB
-      }
-      setData(results);
-    } catch (e: any) {
-      setError(e.message);
-      toast({ variant: "destructive", title: "Erreur de chargement", description: e.message });
-    } finally {
-      setLoading(false);
-    }
-  }, [fetchAndStoreResults, toast]);
+        const fetchedData: DrawResult[] = await response.json();
 
+        // Filter for the specific draw category based on apiDrawName
+        const relevantData = fetchedData.filter((d) => d.drawName === apiDrawName);
+
+        if (relevantData.length > 0) {
+          await addDrawResults(relevantData);
+        }
+        return relevantData;
+      } catch (e: any) {
+        console.error('Erreur lors du fetchAndStoreResults:', e);
+        setError(e.message || 'Une erreur inconnue est survenue.');
+        toast({
+          variant: 'destructive',
+          title: 'Erreur de Récupération',
+          description: e.message || 'Impossible de récupérer les derniers résultats.',
+        });
+        return [];
+      } finally {
+        setLoading(false);
+      }
+    },
+    [toast]
+  );
+
+  const loadInitialData = useCallback(
+    async (category: FlatDrawCategory) => {
+      setLoading(true);
+      try {
+        let results = await getDrawResults(category.apiName);
+        if (results.length === 0) {
+          toast({
+            title: 'Base de données locale vide',
+            description: `Chargement initial des données pour ${category.name}...`,
+          });
+          // Fetch last few months if DB is empty for this category
+          const today = new Date();
+          for (let i = 0; i < MONTHS_TO_FETCH_INITIALLY; i++) {
+            const targetMonth = subMonths(today, i);
+            const monthYearStr = format(targetMonth, 'MMMM-yyyy', { locale: frenchLocale as Locale }).toLowerCase(); // e.g., mai-2024
+            const fetchedForMonth = await fetchAndStoreResults(category.apiName, monthYearStr);
+            // results = [...results, ...fetchedForMonth]; // Not strictly needed if getDrawResults is called again
+          }
+          results = await getDrawResults(category.apiName); // Re-fetch all from DB
+        }
+        setData(results);
+      } catch (e: any) {
+        setError(e.message);
+        toast({ variant: 'destructive', title: 'Erreur de chargement', description: e.message });
+      } finally {
+        setLoading(false);
+      }
+    },
+    [fetchAndStoreResults, toast]
+  );
 
   useEffect(() => {
     if (currentDrawCategory) {
@@ -93,42 +122,53 @@ export function useLotteryData(drawSlug: string | null) {
     }
   }, [currentDrawCategory, loadInitialData]);
 
-  const refreshData = useCallback(async () => {
-    if (!currentDrawCategory) return;
-    setLoading(true);
-    toast({ title: "Mise à jour", description: `Recherche de nouveaux résultats pour ${currentDrawCategory.name}...` });
-    
-    // Fetch for current month and potentially previous month to catch recent results
-    const today = new Date();
-    const currentMonthStr = format(today, 'MMMM-yyyy', { locale: {localize:{month:n=>['janvier','février','mars','avril','mai','juin','juillet','août','septembre','octobre','novembre','décembre'][n-1]}} as any}).toLowerCase();
-    const prevMonthStr = format(subMonths(today, 1), 'MMMM-yyyy', { locale: {localize:{month:n=>['janvier','février','mars','avril','mai','juin','juillet','août','septembre','octobre','novembre','décembre'][n-1]}} as any}).toLowerCase();
+  const refreshData = useCallback(
+    async () => {
+      if (!currentDrawCategory) return;
+      setLoading(true);
+      toast({
+        title: 'Mise à jour',
+        description: `Recherche de nouveaux résultats pour ${currentDrawCategory.name}...`,
+      });
 
-    await fetchAndStoreResults(currentDrawCategory.apiName, currentMonthStr);
-    await fetchAndStoreResults(currentDrawCategory.apiName, prevMonthStr); // Ensure we catch any late entries from prev month
+      // Fetch for current month and potentially previous month to catch recent results
+      const today = new Date();
+      const currentMonthStr = format(today, 'MMMM-yyyy', { locale: frenchLocale as Locale }).toLowerCase();
+      const prevMonthStr = format(subMonths(today, 1), 'MMMM-yyyy', { locale: frenchLocale as Locale }).toLowerCase();
 
-    const updatedResults = await getDrawResults(currentDrawCategory.apiName);
-    setData(updatedResults);
-    setLoading(false);
-    toast({ title: "Mise à jour terminée", description: `${currentDrawCategory.name} est à jour.` });
-  }, [currentDrawCategory, fetchAndStoreResults, toast]);
+      await fetchAndStoreResults(currentDrawCategory.apiName, currentMonthStr);
+      await fetchAndStoreResults(currentDrawCategory.apiName, prevMonthStr); // Ensure we catch any late entries from prev month
 
-  const forceClearAndReload = useCallback(async () => {
-    if (!currentDrawCategory) return;
-    setLoading(true);
-    toast({ title: "Nettoyage et Rechargement", description: `Suppression des données locales pour ${currentDrawCategory.name}...` });
-    try {
-      await clearDrawData(currentDrawCategory.apiName);
-      setData([]); // Clear UI data immediately
-      toast({ title: "Données locales effacées", description: "Rechargement des données initiales..." });
-      await loadInitialData(currentDrawCategory); // Reload initial data
-    } catch (e: any) {
-      setError(e.message);
-      toast({ variant: "destructive", title: "Erreur lors du nettoyage", description: e.message });
-    } finally {
+      const updatedResults = await getDrawResults(currentDrawCategory.apiName);
+      setData(updatedResults);
       setLoading(false);
-    }
-  }, [currentDrawCategory, loadInitialData, toast]);
+      toast({ title: 'Mise à jour terminée', description: `${currentDrawCategory.name} est à jour.` });
+    },
+    [currentDrawCategory, fetchAndStoreResults, toast]
+  );
 
+  const forceClearAndReload = useCallback(
+    async () => {
+      if (!currentDrawCategory) return;
+      setLoading(true);
+      toast({
+        title: 'Nettoyage et Rechargement',
+        description: `Suppression des données locales pour ${currentDrawCategory.name}...`,
+      });
+      try {
+        await clearDrawData(currentDrawCategory.apiName);
+        setData([]); // Clear UI data immediately
+        toast({ title: 'Données locales effacées', description: 'Rechargement des données initiales...' });
+        await loadInitialData(currentDrawCategory); // Reload initial data
+      } catch (e: any) {
+        setError(e.message);
+        toast({ variant: 'destructive', title: 'Erreur lors du nettoyage', description: e.message });
+      } finally {
+        setLoading(false);
+      }
+    },
+    [currentDrawCategory, loadInitialData, toast]
+  );
 
   return { data, loading, error, currentDrawCategory, refreshData, forceClearAndReload };
 }
