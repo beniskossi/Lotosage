@@ -261,7 +261,7 @@ export default function AdminDrawsPage() {
                                         <TableRow key={draw.id}>
                                             <TableCell>{draw.id}</TableCell>
                                             <TableCell>{ALL_DRAW_CATEGORIES.find(c => c.apiName === draw.drawName)?.name || draw.drawName}</TableCell>
-                                            <TableCell>{format(parseISO(draw.date), 'dd/MM/yyyy')}</TableCell>
+                                            <TableCell>{draw.date ? format(parseISO(draw.date), 'dd/MM/yyyy') : 'N/A'}</TableCell>
                                             <TableCell>
                                                 <div className="flex gap-1 flex-wrap">
                                                     {draw.gagnants.map(n => <NumberBall key={`g-${n}-${draw.id}`} number={n} size="sm" />)}
@@ -288,7 +288,10 @@ export default function AdminDrawsPage() {
             )}
 
             <Dialog open={isFormOpen} onOpenChange={setIsFormOpen}>
-                <DialogContent className="sm:max-w-[525px]">
+                <DialogContent 
+                    key={isEditing && currentDraw.id !== undefined ? `draw-edit-${currentDraw.id}` : 'draw-add'} 
+                    className="sm:max-w-[525px]"
+                >
                     <DialogHeader>
                         <DialogTitle>{isEditing ? "Modifier le Tirage" : "Ajouter un Tirage"}</DialogTitle>
                     </DialogHeader>
@@ -328,6 +331,3 @@ export default function AdminDrawsPage() {
         </div>
     );
 }
-
-
-    
