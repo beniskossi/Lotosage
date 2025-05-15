@@ -15,10 +15,11 @@ import {
   SidebarTrigger,
   SidebarGroup,
   SidebarGroupLabel,
+  SidebarFooter,
 } from '@/components/ui/sidebar';
 import { Button } from '@/components/ui/button';
 import { ScrollArea } from '@/components/ui/scroll-area';
-import { Ticket, Home, BarChart3, Brain, Search, Download } from 'lucide-react';
+import { Ticket, Home, BarChart3, Brain, Search, Download, ShieldCheck } from 'lucide-react';
 import { DRAW_SCHEDULE, getDrawCategoryBySlug, FlatDrawCategory } from '@/lib/config';
 import InstallPWAButton from '@/components/shared/InstallPWAButton';
 
@@ -30,6 +31,7 @@ export default function AppShell({ children }: AppShellProps) {
   const pathname = usePathname();
   const currentSlug = pathname.split('/draws/')[1]?.split('/')[0];
   const currentDraw = currentSlug ? getDrawCategoryBySlug(currentSlug) : null;
+  const isAdminPage = pathname.startsWith('/admin');
 
   return (
     <SidebarProvider defaultOpen>
@@ -80,18 +82,37 @@ export default function AppShell({ children }: AppShellProps) {
             ))}
           </ScrollArea>
         </SidebarContent>
-        {/* <SidebarFooter className="p-2">
-          <InstallPWAButton />
-        </SidebarFooter> */}
+        <SidebarFooter className="p-2">
+           <SidebarMenu>
+             <SidebarMenuItem>
+                <SidebarMenuButton
+                  asChild
+                  isActive={isAdminPage}
+                  tooltip={{children: "Administration", side: "right", align:"center"}}
+                >
+                  <Link href="/admin/draws">
+                    <ShieldCheck />
+                    <span>Admin</span>
+                  </Link>
+                </SidebarMenuButton>
+              </SidebarMenuItem>
+           </SidebarMenu>
+          {/* <InstallPWAButton /> */}
+        </SidebarFooter>
       </Sidebar>
 
       <SidebarInset className="flex flex-col">
         <header className="sticky top-0 z-10 flex items-center justify-between h-16 px-4 bg-background/80 backdrop-blur-sm border-b">
           <div className="flex items-center gap-2">
             <SidebarTrigger className="md:hidden" />
-             {currentDraw && (
+             {currentDraw && !isAdminPage && (
                 <h2 className="text-lg font-medium">
                   {currentDraw.name} ({currentDraw.day} - {currentDraw.time})
+                </h2>
+              )}
+              {isAdminPage && (
+                 <h2 className="text-lg font-medium">
+                  Administration
                 </h2>
               )}
           </div>
@@ -104,3 +125,4 @@ export default function AppShell({ children }: AppShellProps) {
     </SidebarProvider>
   );
 }
+

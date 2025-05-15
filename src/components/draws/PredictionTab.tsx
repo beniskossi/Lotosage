@@ -43,7 +43,13 @@ export default function PredictionTab({ historicalData, dataLoading, drawName, a
       // Format historical data as a string for the AI model
       const formattedHistoricalData = historicalData
         .slice(0, 50) // Limit to most recent 50 results to avoid overly large input
-        .map(d => `Date: ${d.date}, Gagnants: ${d.gagnants.join(',')}, Machine: ${d.machine.join(',')}`)
+        .map(d => {
+          let entry = `Date: ${d.date}, Gagnants: ${d.gagnants.join(',')}`;
+          if (d.machine && d.machine.length > 0) {
+            entry += `, Machine: ${d.machine.join(',')}`;
+          }
+          return entry;
+        })
         .join('\n');
 
       const input = {
@@ -141,3 +147,4 @@ export default function PredictionTab({ historicalData, dataLoading, drawName, a
     </div>
   );
 }
+

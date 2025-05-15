@@ -29,15 +29,18 @@ export default function DrawResultCard({ result }: DrawResultCardProps) {
             ))}
           </div>
         </div>
-        <div>
-          <h3 className="text-lg font-semibold text-gray-700 mb-2">Numéros Machine:</h3>
-          <div className="flex flex-wrap gap-2">
-            {result.machine.map((num) => (
-              <NumberBall key={`m-${num}`} number={num} />
-            ))}
+        {result.machine && result.machine.length > 0 && (
+          <div>
+            <h3 className="text-lg font-semibold text-gray-700 mb-2">Numéros Machine:</h3>
+            <div className="flex flex-wrap gap-2">
+              {result.machine.map((num) => (
+                <NumberBall key={`m-${num}`} number={num} />
+              ))}
+            </div>
           </div>
-        </div>
+        )}
       </CardContent>
     </Card>
   );
 }
+

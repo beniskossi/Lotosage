@@ -81,12 +81,10 @@ export async function GET(request: NextRequest) {
           
           // Using currentYear derived from monthQuery or current system year
           const parsedDate = parse(dayMonthPart, 'dd/MM', new Date(currentYear, 0, 1)); // Use Jan 1 of currentYear as base
-          // Ensure the parsed month matches the month from monthQuery if provided
+          
           if (monthQuery) {
             const { monthIndex: queryMonthIndex, year: queryYear } = parseMonthYear(monthQuery);
             if (parsedDate.getMonth() !== queryMonthIndex || parsedDate.getFullYear() !== queryYear) {
-               // If month is different, it might be a date from previous/next month shown in current month's calendar view
-               // For now, we rely on the year from monthQuery.
                // This part may need more robust handling if API shows dates from adjacent months.
             }
           }
@@ -97,36 +95,29 @@ export async function GET(request: NextRequest) {
         }
 
         for (const draw of dailyResult.drawResults.standardDraws) {
-          const apiDrawName = draw.drawName; // This is the name from the API
+          const apiDrawName = draw.drawName; 
           if (!validApiDrawNames.has(apiDrawName) || (draw.winningNumbers && draw.winningNumbers.startsWith('.'))) {
             continue; 
           }
           
           const winningNumbers = (draw.winningNumbers?.match(/\d+/g) || []).map(Number).slice(0, 5);
+          // Machine numbers are optional. If present, parse them, otherwise default to empty array.
           const machineNumbers = (draw.machineNumbers?.match(/\d+/g) || []).map(Number).slice(0, 5);
 
-          if (winningNumbers.length === 5 && machineNumbers.length === 5) {
+          // Only winning numbers are strictly required (5 of them).
+          if (winningNumbers.length === 5) {
             results.push({
-              drawName: apiDrawName, // Store the API name
+              drawName: apiDrawName,
               date: drawDate,
               gagnants: winningNumbers,
-              machine: machineNumbers,
+              machine: machineNumbers, // Will be empty array if not present or not 5 numbers
             });
           } else {
-            // console.warn(`Incomplete data for draw ${apiDrawName} on ${drawDate}: W:${winningNumbers.join(',')} M:${machineNumbers.join(',')}`);
+            // console.warn(`Incomplete winning numbers for draw ${apiDrawName} on ${drawDate}: W:${winningNumbers.join(',')}`);
           }
         }
       }
     }
-
-    if (results.length === 0 && drawsResultsWeekly.length > 0) {
-       // This might mean data was present but didn't match criteria or was incomplete
-       // console.warn('No valid draw results parsed, though API returned data. Check parsing logic and filters.');
-    }
-    
-    // No need to return 404 if results are empty, an empty array is a valid response.
-    // Client can handle empty results.
-
     return NextResponse.json(results, { status: 200 });
 
   } catch (error: any) {
@@ -138,3 +129,4 @@ export async function GET(request: NextRequest) {
     return NextResponse.json({ error: 'Failed to fetch results', details: error.message }, { status: 500 });
   }
 }
+

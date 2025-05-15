@@ -26,7 +26,7 @@ const calculateCoOccurrence = (
 
   data.forEach(result => {
     const hasTargetWinning = result.gagnants.includes(targetNumber);
-    const hasTargetMachine = result.machine.includes(targetNumber);
+    const hasTargetMachine = result.machine?.includes(targetNumber); // Check if machine exists
 
     if (hasTargetWinning) {
       result.gagnants.forEach(num => {
@@ -34,21 +34,18 @@ const calculateCoOccurrence = (
           coOccurrencesWinning[num] = (coOccurrencesWinning[num] || 0) + 1;
         }
       });
+      // If target is in winning, check machine numbers of same draw for co-occurrence
+      result.machine?.forEach(num => { // Check if machine exists
+        coOccurrencesMachine[num] = (coOccurrencesMachine[num] || 0) + 1;
+      });
     }
-    if (hasTargetMachine) {
+    
+    if (hasTargetMachine && result.machine) { // Check if machine exists
        result.machine.forEach(num => {
         if (num !== targetNumber) {
           coOccurrencesMachine[num] = (coOccurrencesMachine[num] || 0) + 1;
         }
       });
-    }
-    // If target is in winning, check machine numbers of same draw for co-occurrence
-     if (hasTargetWinning) {
-        result.machine.forEach(num => {
-            // This logic might need refinement based on exact definition of "co-occurrence"
-            // For now, if target is winning, we check other winning AND other machine numbers from same draw.
-             coOccurrencesMachine[num] = (coOccurrencesMachine[num] || 0) + 1; // simplified: count if target is winning
-        });
     }
   });
   
@@ -192,3 +189,4 @@ const CoOccurrenceSection: React.FC<CoOccurrenceSectionProps> = ({ title, stats 
     )}
   </div>
 );
+

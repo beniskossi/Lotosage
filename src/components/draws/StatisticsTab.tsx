@@ -29,9 +29,11 @@ const calculateNumberStats = (data: DrawResult[]): NumberStats[] => {
     result.gagnants.forEach(num => {
       if (stats[num]) stats[num].winningCount++;
     });
-    result.machine.forEach(num => {
-      if (stats[num]) stats[num].machineCount++;
-    });
+    if (result.machine) {
+      result.machine.forEach(num => {
+        if (stats[num]) stats[num].machineCount++;
+      });
+    }
   });
 
   return Object.entries(stats).map(([numStr, counts]) => {
@@ -60,7 +62,9 @@ export default function StatisticsTab({ data, loading, drawName }: StatisticsTab
       return data;
     }
     const count = parseInt(filterPeriod);
-    return data.slice(0, count);
+    // Ensure data is sorted by date descending before slicing
+    const sortedData = [...data].sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
+    return sortedData.slice(0, count);
   }, [data, filterPeriod]);
 
   const numberStats = useMemo(() => {

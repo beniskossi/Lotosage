@@ -3,7 +3,7 @@ export interface DrawResult {
   drawName: string; // This should match the `apiName` from FlatDrawCategory
   date: string; // YYYY-MM-DD
   gagnants: number[]; // Winning numbers
-  machine: number[]; // Machine numbers
+  machine?: number[]; // Machine numbers, now optional
 }
 
 export type BallColor = 
@@ -28,3 +28,4 @@ export interface ConsultData {
   coOccurrencesMachine: CoOccurrenceStat[]; // Co-occurrence in same draw, machine numbers
   // Could add co-occurrence with next draw if logic is complex and needs specific display
 }
+
