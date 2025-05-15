@@ -1,3 +1,4 @@
+
 "use client";
 
 import { useState, useEffect, useCallback, ChangeEvent } from 'react';
@@ -11,7 +12,7 @@ import {
     addDrawResults as bulkAddDrawResults
 } from '@/lib/indexeddb';
 import { ALL_DRAW_CATEGORIES, FlatDrawCategory } from '@/lib/config';
-import { Button } from '@/components/ui/button';
+import { Button, buttonVariants } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
@@ -205,7 +206,7 @@ export default function AdminDrawsPage() {
                         <div className="flex gap-2">
                             <Button onClick={openAddForm}><PlusCircle className="mr-2 h-4 w-4" /> Ajouter un Tirage</Button>
                             <Button onClick={handleExport} variant="outline"><Download className="mr-2 h-4 w-4" /> Exporter Tout (JSON)</Button>
-                             <Label htmlFor="import-file" className={Button.prototype.constructor.variants({ variant: 'outline' })}>
+                             <Label htmlFor="import-file" className={buttonVariants({ variant: 'outline' })}>
                                 <Upload className="mr-2 h-4 w-4" /> Importer (JSON)
                             </Label>
                             <Input id="import-file" type="file" accept=".json" onChange={handleImport} className="hidden" />
@@ -327,3 +328,6 @@ export default function AdminDrawsPage() {
         </div>
     );
 }
+
+
+    
