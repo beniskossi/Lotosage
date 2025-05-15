@@ -1,3 +1,4 @@
+
 export interface DrawTimeDetails {
   name: string;
   slug: string;
@@ -16,31 +17,31 @@ export const DRAW_SCHEDULE: DrawSchedule = {
     '10H': { name: 'Réveil', slug: 'reveil' },
     '13H': { name: 'Étoile', slug: 'etoile' },
     '16H': { name: 'Akwaba', slug: 'akwaba' },
-    '18H15': { name: 'Spécial Lundi', slug: 'special-lundi' },
+    '18H15': { name: 'Monday Special', slug: 'monday-special' },
   },
   Mardi: {
     '10H': { name: 'La Matinale', slug: 'la-matinale' },
     '13H': { name: 'Émergence', slug: 'emergence' },
     '16H': { name: 'Sika', slug: 'sika' },
-    '18H15': { name: 'Mardi de la Chance', slug: 'mardi-de-la-chance' },
+    '18H15': { name: 'Lucky Tuesday', slug: 'lucky-tuesday' },
   },
   Mercredi: {
     '10H': { name: 'Première Heure', slug: 'premiere-heure' },
     '13H': { name: 'Fortune', slug: 'fortune' },
     '16H': { name: 'Baraka', slug: 'baraka' },
-    '18H15': { name: 'Milieu de Semaine', slug: 'milieu-de-semaine' },
+    '18H15': { name: 'Midweek', slug: 'midweek' },
   },
   Jeudi: {
     '10H': { name: 'Kado', slug: 'kado' },
     '13H': { name: 'Privilège', slug: 'privilege' },
     '16H': { name: 'Monni', slug: 'monni' },
-    '18H15': { name: 'Jeudi de la Fortune', slug: 'jeudi-de-la-fortune' },
+    '18H15': { name: 'Fortune Thursday', slug: 'fortune-thursday' },
   },
   Vendredi: {
     '10H': { name: 'Espèces', slug: 'especes' },
     '13H': { name: 'Solution', slug: 'solution' },
     '16H': { name: 'Wari', slug: 'wari' },
-    '18H15': { name: 'Vendredi Bonanza', slug: 'vendredi-bonanza' },
+    '18H15': { name: 'Friday Bonanza', slug: 'friday-bonanza' },
   },
   Samedi: {
     '10H': { name: 'Soutra', slug: 'soutra' },
@@ -84,7 +85,7 @@ export const API_DRAW_SCHEDULE = {
     '18H15': 'Fortune Thursday',
   },
   Vendredi: {
-    '10H': 'Cash',
+    '10H': 'Cash', // Display name is "Espèces", API name is "Cash"
     '13H': 'Solution',
     '16H': 'Wari',
     '18H15': 'Friday Bonanza',
