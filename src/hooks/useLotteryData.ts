@@ -3,7 +3,7 @@
 import { useState, useEffect, useCallback } from 'react';
 import type { DrawResult } from '@/lib/types';
 import { addDrawResults, getDrawResults, clearDrawData, getLatestDrawDate } from '@/lib/indexeddb';
-import { useToast } from '@/components/ui/use-toast';
+import { useToast } from '@/hooks/use-toast';
 import { getDrawCategoryBySlug, FlatDrawCategory } from '@/lib/config';
 import { format, subMonths, getYear, getMonth } from 'date-fns';
 

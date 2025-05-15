@@ -9,7 +9,7 @@ import ErrorMessage from '@/components/shared/ErrorMessage';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Brain, Lightbulb } from 'lucide-react';
-import { useToast } from '@/components/ui/use-toast';
+import { useToast } from '@/hooks/use-toast';
 
 interface PredictionTabProps {
   historicalData: DrawResult[];
