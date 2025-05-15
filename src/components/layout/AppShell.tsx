@@ -1,3 +1,4 @@
+
 "use client";
 
 import React from 'react';
@@ -16,30 +17,37 @@ import {
   SidebarGroup,
   SidebarGroupLabel,
   SidebarFooter,
+  useSidebar, // Import useSidebar
 } from '@/components/ui/sidebar';
 import { Button } from '@/components/ui/button';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Ticket, Home, BarChart3, Brain, Search, Download, ShieldCheck } from 'lucide-react';
 import { DRAW_SCHEDULE, getDrawCategoryBySlug, FlatDrawCategory } from '@/lib/config';
 import InstallPWAButton from '@/components/shared/InstallPWAButton';
+import { SheetTitle } from '@/components/ui/sheet'; 
 
 interface AppShellProps {
   children: React.ReactNode;
 }
 
-export default function AppShell({ children }: AppShellProps) {
+function AppShellContent({ children }: AppShellProps) {
   const pathname = usePathname();
   const currentSlug = pathname.split('/draws/')[1]?.split('/')[0];
   const currentDraw = currentSlug ? getDrawCategoryBySlug(currentSlug) : null;
   const isAdminPage = pathname.startsWith('/admin');
+  const { isMobile } = useSidebar(); // Get isMobile state from context
 
   return (
-    <SidebarProvider defaultOpen>
+    <>
       <Sidebar>
         <SidebarHeader className="p-4">
           <Link href="/" className="flex items-center gap-2">
             <Ticket className="w-8 h-8 text-primary" />
-            <h1 className="text-xl font-semibold">Loto Predictor</h1>
+            {isMobile ? (
+              <SheetTitle className="text-xl font-semibold">Loto Predictor</SheetTitle>
+            ) : (
+              <span className="text-xl font-semibold">Loto Predictor</span>
+            )}
           </Link>
         </SidebarHeader>
         <SidebarContent asChild>
@@ -122,7 +130,14 @@ export default function AppShell({ children }: AppShellProps) {
           {children}
         </main>
       </SidebarInset>
-    </SidebarProvider>
+    </>
   );
 }
 
+export default function AppShell(props: AppShellProps) {
+  return (
+    <SidebarProvider defaultOpen>
+      <AppShellContent {...props} />
+    </SidebarProvider>
+  );
+}
